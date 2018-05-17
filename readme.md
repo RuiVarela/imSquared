@@ -6,4 +6,4 @@ Cross platform puzzle game engine
 # credits
 This game was developed by
 * Rui Varela
-* Pedro Bastos
+* [Pedro Bastos](https://github.com/theaGit)
