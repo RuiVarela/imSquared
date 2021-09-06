@@ -87,31 +87,6 @@ public:
 
     typedef std::vector<Level> Levels;
 
-    struct Configuration
-    {
-        Configuration()
-            : screenWidth(0), screenHeight(0),
-              columns(0), rows(0),
-              squareWidth(0), squareHeight(0),
-              missScoreFactor(-0.2f), hardness(0),
-              menus_enabled(false)
-        {
-        }
-
-        int screenWidth;
-        int screenHeight;
-        int columns;
-        int rows;
-
-        float squareWidth;
-        float squareHeight;
-
-        float missScoreFactor;
-
-        int hardness;
-
-        bool menus_enabled;
-    };
 
     imSquared();
     ~imSquared();
@@ -131,28 +106,23 @@ public:
     void step();
     void run();
 
-    void setTouches(Points const &touches);
-
-    Menu &menu();
-
 private:
-    bool UpdateLevelChaining();
+    int m_screenWidth;
+    int m_screenHeight;
+    int m_columns;
+    int m_rows;
 
-    void ShowMainMenu();
+    float m_squareWidth;
+    float m_squareHeight;
 
-    Configuration m_configuration;
-    SquareMatrix m_matrix;
-    Points m_touches;
+    float m_missScoreFactor;
+
+    int m_hardness;
+
     float m_translation;
     double m_lastUpdate;
 
-    void updateResolution();
-    void applyColors();
-    void processTouches();
-    bool pointHitSquare(Vector2 const &point, SquareElement const &square);
-    void processFigures();
-
-    void loadDatabase();
+    SquareMatrix m_matrix;
 
     Figures m_figures;
     int m_lastFigure;
@@ -167,6 +137,25 @@ private:
     int m_currentLevel;
     int m_lineCreated;
 
+    FiguresOnBoard m_figuresOnBoard;
+
+    int m_score;
+    bool m_ended;
+
+    RenderTexture2D m_base_pass;
+    bool m_audio_started;
+    std::string m_center_message;
+
+    bool UpdateLevelChaining();
+
+    void updateResolution();
+    void applyColors();
+    void processTouches();
+    bool pointHitSquare(Vector2 const &point, SquareElement const &square);
+    void processFigures();
+
+    void loadDatabase();
+
     int indexFromFigureName(std::string const &name);
     int indexFromLevelName(std::string const &name);
 
@@ -175,19 +164,6 @@ private:
     void addHitToFigureOnBoard(int figureGeneration, int hit);
 
     bool isFigureOnMatrix(int figureGeneration);
-
-    FiguresOnBoard m_figuresOnBoard;
-
-    int m_score;
-
-    bool m_ended;
-    Menu m_menu;
-
-    friend class Menu;
-
-    RenderTexture2D m_base_pass;
-    bool m_audio_started;
-    std::string m_center_message;
 
     void renderBackground();
     void renderBlocks();

@@ -39,6 +39,10 @@ imSquared::Level::Level()
 }
 
 imSquared::imSquared()
+    : m_screenWidth(0), m_screenHeight(0),
+      m_columns(0), m_rows(0),
+      m_squareWidth(0), m_squareHeight(0),
+      m_missScoreFactor(-0.2f), m_hardness(0)
 {
     m_audio_started = false;
     m_base_pass.id = -1;
@@ -47,7 +51,6 @@ imSquared::imSquared()
 
 imSquared::~imSquared()
 {
-
     m_matrix.clear();
 }
 
@@ -63,8 +66,8 @@ bool imSquared::ended()
 
 bool imSquared::completed()
 {
-    return (m_score > (m_levels[m_currentLevel].clear_factor[m_configuration.hardness] *
-                       m_levels[m_currentLevel].max_expected_score[m_configuration.hardness]));
+    return (m_score > (m_levels[m_currentLevel].clear_factor[m_hardness] *
+                       m_levels[m_currentLevel].max_expected_score[m_hardness]));
 }
 
 void imSquared::shutdown()
@@ -95,11 +98,10 @@ void imSquared::setup()
     SetTargetFPS(30);
 #endif
 
-    m_configuration.screenWidth = -1;
-    m_configuration.screenHeight = -1;
-    m_configuration.columns = 10;
-    m_configuration.rows = 13;
-    m_configuration.menus_enabled = false;
+    m_screenWidth = -1;
+    m_screenHeight = -1;
+    m_columns = 10;
+    m_rows = 13;
 
     //
     // Load Figure Database
@@ -134,7 +136,7 @@ void imSquared::startLevel(std::string const &level)
     //
     // initialize level
     //
-    m_speed = m_levels[m_currentLevel].speed[m_configuration.hardness];
+    m_speed = m_levels[m_currentLevel].speed[m_hardness];
 
     //
     // Setup Geometry
@@ -148,10 +150,10 @@ void imSquared::startLevel(std::string const &level)
     //
     // Compute Square positions
     //
-    for (int currentLine = 0; currentLine != m_configuration.rows; ++currentLine)
+    for (int currentLine = 0; currentLine != m_rows; ++currentLine)
     {
         SquareElements row;
-        for (int currentColumn = 0; currentColumn != m_configuration.columns; ++currentColumn)
+        for (int currentColumn = 0; currentColumn != m_columns; ++currentColumn)
         {
             SquareElement cell;
 
@@ -170,8 +172,6 @@ void imSquared::startLevel(std::string const &level)
         m_matrix.push_back(row);
     }
 
-    m_touches.clear();
-
     m_figureGeneration = -1;
     m_currentFigure = -1;
     m_currentFigureLine = 0;
@@ -186,39 +186,34 @@ void imSquared::startLevel(std::string const &level)
 
 void imSquared::applyColors()
 {
-    for (SquareMatrix::iterator row = m_matrix.begin(); row != m_matrix.end(); ++row)
-    {
-        for (SquareElements::iterator cell = row->begin(); cell != row->end(); ++cell)
-        {
-
-            if (cell->state == Idle)
+    for (auto& row : m_matrix)
+        for (auto& cell : row)
+            if (cell.state == Idle)
             {
             }
-            else if (cell->state == Marked)
+            else if (cell.state == Marked)
             {
-                cell->color = cell->markedColor;
+                cell.color = cell.markedColor;
             }
-            else if (cell->state == Hit)
+            else if (cell.state == Hit)
             {
-                cell->color.r = 0;
-                cell->color.g = 255;
-                cell->color.b = 0;
-                cell->color.a = 255;
+                cell.color.r = 0;
+                cell.color.g = 255;
+                cell.color.b = 0;
+                cell.color.a = 255;
             }
-            else if (cell->state == Miss)
+            else if (cell.state == Miss)
             {
-                cell->color.r = 255;
-                cell->color.g = 0;
-                cell->color.b = 0;
-                cell->color.a = 255;
+                cell.color.r = 255;
+                cell.color.g = 0;
+                cell.color.b = 0;
+                cell.color.a = 255;
             }
-        }
-    }
 }
 
 void imSquared::updateResolution()
 {
-    bool resized = (GetScreenWidth() != m_configuration.screenWidth) || (GetScreenHeight() != m_configuration.screenHeight);
+    bool resized = (GetScreenWidth() != m_screenWidth) || (GetScreenHeight() != m_screenHeight);
 
     if (m_base_pass.id == -1 || resized)
     {
@@ -238,31 +233,28 @@ void imSquared::updateResolution()
 
     if (resized)
     {
-        m_configuration.screenWidth = GetScreenWidth();
-        m_configuration.screenHeight = GetScreenHeight();
+        m_screenWidth = GetScreenWidth();
+        m_screenHeight = GetScreenHeight();
 
-        m_configuration.squareWidth =
-            (float)m_configuration.screenWidth / (float)m_configuration.columns;
-
-        m_configuration.squareHeight =
-            (float)m_configuration.screenHeight / (float)(m_configuration.rows - 1);
+        m_squareWidth = (float)m_screenWidth / (float)m_columns;
+        m_squareHeight = (float)m_screenHeight / (float)(m_rows - 1);
 
         //
         // Compute Square positions
         //
         int margin = 1;
 
-        for (int currentLine = 0; currentLine != m_configuration.rows; ++currentLine)
+        for (int currentLine = 0; currentLine != m_rows; ++currentLine)
         {
             SquareElements &row = m_matrix[currentLine];
-            for (int currentColumn = 0; currentColumn != m_configuration.columns; ++currentColumn)
+            for (int currentColumn = 0; currentColumn != m_columns; ++currentColumn)
             {
                 SquareElement &cell = row[currentColumn];
 
-                cell.rectangle.x = currentColumn * m_configuration.squareWidth + margin;
-                cell.rectangle.y = currentLine * m_configuration.squareHeight + margin;
-                cell.rectangle.width = m_configuration.squareWidth - 2 * margin;
-                cell.rectangle.height = m_configuration.squareHeight - 2 * margin;
+                cell.rectangle.x = currentColumn * m_squareWidth + margin;
+                cell.rectangle.y = currentLine * m_squareHeight + margin;
+                cell.rectangle.width = m_squareWidth - 2 * margin;
+                cell.rectangle.height = m_squareHeight - 2 * margin;
             }
         }
     }
@@ -272,38 +264,27 @@ void imSquared::update()
 {
     updateResolution();
 
-    if (!UpdateLevelChaining())
-    {
-        return;
-    }
-
-    if (m_menu.activated())
-    {
-        m_menu.update(this);
-        return;
-    }
-
     if (m_levels.empty())
         return;
 
     double currentTime = getCurrentSec();
     double updateDelta = currentTime - m_lastUpdate;
 
-    m_translation += (updateDelta / m_speed) * m_configuration.squareHeight;
+    m_translation += (updateDelta / m_speed) * m_squareHeight;
     //logDbg("Simon", sfmt("m_translation %0.5f", m_translation));
 
-    if (m_translation > m_configuration.squareHeight)
+    if (m_translation > m_squareHeight)
     {
         processLeavingFigures();
 
-        for (int currentColumn = 0; currentColumn != m_configuration.columns; ++currentColumn)
-            for (int currentLine = 0; currentLine != (m_configuration.rows - 1); ++currentLine)
+        for (int currentColumn = 0; currentColumn != m_columns; ++currentColumn)
+            for (int currentLine = 0; currentLine != (m_rows - 1); ++currentLine)
             {
                 Rectangle rectangle = m_matrix[currentLine][currentColumn].rectangle;
                 m_matrix[currentLine][currentColumn] = m_matrix[currentLine + 1][currentColumn];
                 m_matrix[currentLine][currentColumn].rectangle = rectangle;
 
-                if (currentLine == (m_configuration.rows - 2))
+                if (currentLine == (m_rows - 2))
                 {
                     m_matrix[currentLine + 1][currentColumn].figureGeneration = -1;
                     m_matrix[currentLine + 1][currentColumn].state = Idle;
@@ -318,13 +299,13 @@ void imSquared::update()
 
         ++m_lineCreated;
 
-        while (m_translation > m_configuration.squareHeight)
-            m_translation -= m_configuration.squareHeight;
+        while (m_translation > m_squareHeight)
+            m_translation -= m_squareHeight;
 
         processFigures();
     }
 
-    m_speed += updateDelta * m_levels[m_currentLevel].speed_increment_per_second[m_configuration.hardness];
+    m_speed += updateDelta * m_levels[m_currentLevel].speed_increment_per_second[m_hardness];
     if (m_speed < m_levels[m_currentLevel].speed_max)
         m_speed = m_levels[m_currentLevel].speed_max;
 
@@ -335,7 +316,7 @@ void imSquared::update()
     if ((!m_levels.empty() && (m_figureGeneration > m_levels[m_currentLevel].total_figures) && m_figuresOnBoard.empty()))
     {
         m_ended = true;
-        m_score += m_levels[m_currentLevel].bonus[m_configuration.hardness];
+        m_score += m_levels[m_currentLevel].bonus[m_hardness];
     }
 }
 
@@ -353,21 +334,33 @@ void imSquared::processTouches()
     //
     // check hits
     //
-    for (Points::const_iterator i = m_touches.begin(); i != m_touches.end(); ++i)
-        for (SquareMatrix::iterator row = m_matrix.begin(); row != m_matrix.end(); ++row)
-            for (SquareElements::iterator cell = row->begin(); cell != row->end(); ++cell)
-            {
-                if (cell->state == Idle)
-                {
-                    if (pointHitSquare(*i, *cell))
-                    {
-                        cell->state = Miss;
+    bool pressed = false;
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) pressed = true;
+    if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) pressed = true;
+    if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) pressed = true;
 
-                        if (cell->figure >= 0)
+    int maxTouches = 3;
+    
+    for (int index = 0; index != maxTouches; ++index)
+    {
+        Vector2 touch = GetTouchPosition(index);
+        if ((touch.x < 0) || (touch.y < 0) || !pressed)
+            continue;
+
+        for (auto &row : m_matrix)
+            for (auto &cell : row)
+            {
+                if (cell.state == Idle)
+                {
+                    if (pointHitSquare(touch, cell))
+                    {
+                        cell.state = Miss;
+
+                        if (cell.figure >= 0)
                         {
-                            int computed = (float)m_figures[cell->figure].score *
-                                           (float)m_levels[m_currentLevel].score_factor[m_configuration.hardness] *
-                                           (float)m_configuration.missScoreFactor;
+                            int computed = (float)m_figures[cell.figure].score *
+                                           (float)m_levels[m_currentLevel].score_factor[m_hardness] *
+                                           (float)m_missScoreFactor;
                             m_score += computed;
                             logDbg("Simon", sfmt("Miss Score: %d", computed));
                             m_multiplier = 1;
@@ -378,17 +371,17 @@ void imSquared::processTouches()
                         }
                     }
                 }
-                else if (cell->state == Marked)
+                else if (cell.state == Marked)
                 {
-                    if (pointHitSquare(*i, *cell))
+                    if (pointHitSquare(touch, cell))
                     {
-                        cell->state = Hit;
+                        cell.state = Hit;
 
-                        addHitToFigureOnBoard(cell->figureGeneration, 1);
-                        if (cell->figure >= 0)
+                        addHitToFigureOnBoard(cell.figureGeneration, 1);
+                        if (cell.figure >= 0)
                         {
-                            int computed = (float)m_figures[cell->figure].score *
-                                           (float)m_levels[m_currentLevel].score_factor[m_configuration.hardness] *
+                            int computed = (float)m_figures[cell.figure].score *
+                                           (float)m_levels[m_currentLevel].score_factor[m_hardness] *
                                            (float)m_multiplier;
                             m_score += computed;
                             logDbg("Simon", sfmt("Hit Score: %d %d", m_multiplier, computed));
@@ -396,36 +389,18 @@ void imSquared::processTouches()
                     }
                 }
             }
+    }
 
     //
     // check multiplicators
     //
-    for (auto& figure : m_figuresOnBoard)
-    {
+    for (auto &figure : m_figuresOnBoard)
         if ((figure.hitCount == figure.markedCount) && !figure.multiplied)
         {
             m_multiplier++;
             figure.multiplied = true;
         }
-    }
-}
-
-void imSquared::setTouches(Points const &touches)
-{
-    m_touches = touches;
-
-    if (m_menu.activated())
-    {
-        m_menu.click(this);
-        return;
-    }
-
-    processTouches();
-}
-
-Menu &imSquared::menu()
-{
-    return m_menu;
+    
 }
 
 void imSquared::processLeavingFigures()
@@ -434,34 +409,24 @@ void imSquared::processLeavingFigures()
     // check for squares not pressed on last line
     //
     for (SquareElements::iterator i = m_matrix.rbegin()->begin(); i != m_matrix.rbegin()->end(); ++i)
-    {
         if (i->state == Marked)
-        {
             m_multiplier = 1;
-        }
-    }
 }
 
 void imSquared::addHitToFigureOnBoard(int figureGeneration, int hit)
 {
-    for (FiguresOnBoard::iterator iterator = m_figuresOnBoard.begin();
-         iterator != m_figuresOnBoard.end(); ++iterator)
-    {
-        if (iterator->figureGeneration == figureGeneration)
-        {
-            iterator->hitCount += hit;
-        }
-    }
+    for (auto& figure : m_figuresOnBoard)
+        if (figure.figureGeneration == figureGeneration)
+            figure.hitCount += hit;  
 }
 
 bool imSquared::isFigureOnMatrix(int figureGeneration)
 {
     for (auto& row : m_matrix)
         for (auto& cell : row)
-        {
             if ((cell.figureGeneration == figureGeneration) && (cell.hasPiece))
                 return true;
-        }
+        
 
     return false;
 }
@@ -511,7 +476,7 @@ void imSquared::processFigures()
                 m_currentFigure = m_levels[m_currentLevel].figures[m_figureGeneration];
             }
 
-            m_currentFigureOffset = rand() % (m_configuration.columns - m_figures[m_currentFigure].width + 1);
+            m_currentFigureOffset = rand() % (m_columns - m_figures[m_currentFigure].width + 1);
 
             FigureOnBoard figureOnBoard;
             figureOnBoard.figure = m_currentFigure;
@@ -580,49 +545,4 @@ void imSquared::run()
     {
         step();
     }
-}
-
-void imSquared::ShowMainMenu()
-{
-    Menu::Elements elements;
-
-    for (Levels::iterator level = m_levels.begin(); level != m_levels.end(); ++level)
-    {
-        elements.push_back(level->name);
-    }
-    m_menu.SetElements(elements);
-    m_menu.SetTitle(IMS_MAIN_MENU_TITLE);
-    m_menu.Show();
-    logDbg("Simon", sfmt("ShowMainMenu() finished"));
-}
-
-bool imSquared::UpdateLevelChaining()
-{
-    if (!m_configuration.menus_enabled)
-        return true;
-
-    if (m_menu.activated())
-    {
-        if (m_menu.Selected() != -1)
-        {
-            std::string level = m_levels[m_menu.Selected()].name;
-            //Configuration configuration = m_configuration;
-            //configuration.level = level;
-            m_menu.Hide();
-
-            // initialize(configuration);
-
-            return false;
-        }
-    }
-    else
-    {
-        if (ended())
-        {
-            ShowMainMenu();
-            return false;
-        }
-    }
-
-    return true;
 }
