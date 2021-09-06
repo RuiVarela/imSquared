@@ -9,3 +9,6 @@
 /captures
 .externalNativeBuild
 /.idea
+*.dSYM
+*.o
+imSquared
