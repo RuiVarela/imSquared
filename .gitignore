@@ -12,3 +12,4 @@
 *.dSYM
 *.o
 imSquared
+*.pch
