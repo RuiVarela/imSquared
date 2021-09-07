@@ -69,7 +69,7 @@ void imSquared::render()
             DrawText(m_center_message.c_str(), x, y, font_size, OLD_LAVANDER);
         }
 
-        DrawText(re::sfmt("%08d %03d", m_score, m_multiplier).c_str(), 20, 20, 20, LIGHTGRAY);
+        DrawText(re::sfmt("%08d %03d %s", m_score, m_multiplier, m_currentLevelName).c_str(), 20, 20, 20, LIGHTGRAY);
     }
     EndTextureMode();
 

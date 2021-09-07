@@ -19,6 +19,9 @@
         "valarray": "cpp",
         "vector": "cpp",
         "chrono": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "__locale": "cpp",
+        "system_error": "cpp",
+        "typeinfo": "cpp"
     }
 }

@@ -59,11 +59,6 @@ int imSquared::score()
     return m_score;
 }
 
-bool imSquared::ended()
-{
-    return m_ended;
-}
-
 bool imSquared::completed()
 {
     return (m_score > (m_levels[m_currentLevel].clear_factor[m_hardness] *
@@ -108,44 +103,33 @@ void imSquared::setup()
     //
     loadDatabase();
 
-
     //
-    // Show menu
+    // Start Level
     //
-    //if ((m_currentLevel == -1) && (m_configuration.menus_enabled))
-   // {
-   //     ShowMainMenu();
-   // }
-
-    startLevel("level 1");
+    startLevel(0);
 }
 
-void imSquared::startLevel(std::string const &level)
+void imSquared::startLevel(int level)
 {
-    m_ended = false;
-    m_currentLevel = indexFromLevelName(level);
-
-    //if (m_currentLevel == -1)
-    //{
-    //	DPrintf("Invalid level %s", m_configuration.level.c_str());
-    //	m_levels.clear();
-    //	m_figures.clear();
-    //	return;
-    //}
+    m_currentLevel = level;
 
     //
     // initialize level
     //
+    m_currentLevelName = m_levels[m_currentLevel].name;
     m_speed = m_levels[m_currentLevel].speed[m_hardness];
+
+
+    m_translation = 0.0;
+    m_lastUpdate = getCurrentSec();
 
     //
     // Setup Geometry
     //
     m_matrix.clear();
-
-    m_translation = 0.0;
-    m_lastUpdate = getCurrentSec();
     m_lineCreated = 0;
+
+    m_score = 0;
 
     //
     // Compute Square positions
@@ -178,8 +162,6 @@ void imSquared::startLevel(std::string const &level)
     m_currentFigureOffset = 0;
 
     m_multiplier = 1;
-    m_score = 0;
-
 
     m_figuresOnBoard.clear();
 }
@@ -303,6 +285,21 @@ void imSquared::update()
             m_translation -= m_squareHeight;
 
         processFigures();
+
+        // check if level changed
+        if (!m_levels.empty() && (m_figureGeneration > m_levels[m_currentLevel].total_figures) && m_figuresOnBoard.empty())
+        {
+            m_score += m_levels[m_currentLevel].bonus[m_hardness];
+
+            // change level
+            m_currentLevel = (m_currentLevel + 1) % m_levels.size();
+            m_currentLevelName = m_levels[m_currentLevel].name;
+            m_speed = m_levels[m_currentLevel].speed[m_hardness];
+            m_figureGeneration = -1;
+            m_currentFigure = -1;
+            m_currentFigureLine = 0;
+            m_currentFigureOffset = 0;
+        }
     }
 
     m_speed += updateDelta * m_levels[m_currentLevel].speed_increment_per_second[m_hardness];
@@ -312,18 +309,14 @@ void imSquared::update()
     m_lastUpdate = getCurrentSec();
     processTouches();
     applyColors();
-
-    if ((!m_levels.empty() && (m_figureGeneration > m_levels[m_currentLevel].total_figures) && m_figuresOnBoard.empty()))
-    {
-        m_ended = true;
-        m_score += m_levels[m_currentLevel].bonus[m_hardness];
-    }
 }
 
 bool imSquared::pointHitSquare(Vector2 const &point, SquareElement const &square)
 {
-    // Test point againt corner 1 and corner 4
-    return CheckCollisionPointRec(point, square.rectangle);
+    Rectangle rectangle = square.rectangle;
+    rectangle.y -= m_translation;
+
+    return CheckCollisionPointRec(point, rectangle);
 }
 
 void imSquared::processTouches()
@@ -362,6 +355,9 @@ void imSquared::processTouches()
                                            (float)m_levels[m_currentLevel].score_factor[m_hardness] *
                                            (float)m_missScoreFactor;
                             m_score += computed;
+                            if (m_score < 0)
+                                m_score = 0;
+
                             logDbg("Simon", sfmt("Miss Score: %d", computed));
                             m_multiplier = 1;
 

@@ -93,11 +93,9 @@ public:
 
     void setup();
     void shutdown();
-    void startLevel(std::string const& level);
+    void startLevel(int level);
 
     int score();
-
-    bool ended();
 
     bool completed();
 
@@ -135,18 +133,16 @@ private:
     float m_speed;
     Levels m_levels;
     int m_currentLevel;
+    std::string m_currentLevelName;
     int m_lineCreated;
 
     FiguresOnBoard m_figuresOnBoard;
 
     int m_score;
-    bool m_ended;
 
     RenderTexture2D m_base_pass;
     bool m_audio_started;
     std::string m_center_message;
-
-    bool UpdateLevelChaining();
 
     void updateResolution();
     void applyColors();
