@@ -1,8 +1,4 @@
 name: ryven
-score: 10
-hits: 11
-color: 0 0 255 255
-sound: sound_1
 
 XXX-
 X-X-
@@ -13,10 +9,6 @@ X--X
 #
 
 name: figure_1
-score: 20
-hits: 21
-color: 0 0 150 255
-sound: sound_2
 
 ---X---
 XX-X-XX
@@ -27,10 +19,6 @@ XX-X-XX
 #
 
 name: figure_2
-score: 30
-hits: 31
-color: 0 30 200 255
-sound: sound_3
 
 X---XX
 XX----
@@ -40,10 +28,6 @@ XX-XX-
 #
 
 name: figure_3
-score: 40
-hits: 41
-color: 50 0 200 255
-sound: sound_4
 
 X---X-
 ------
@@ -57,10 +41,6 @@ X---X-
 
 
 name: peter
-score: 50
-hits: 51
-color: 100 10 0 255
-sound: sound_5
 
 XXX
 X-X

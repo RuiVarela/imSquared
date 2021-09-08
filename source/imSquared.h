@@ -44,10 +44,6 @@ public:
         int markedCount;
         int width;
         int height;
-        int score;
-        int hits;
-        Color color;
-        std::string sound;
         std::string name;
     };
 
@@ -57,9 +53,7 @@ public:
     {
         int figure;
         int markedCount;
-        int hitCount;
         int figureGeneration;
-        bool multiplied;
     };
     typedef std::vector<FigureOnBoard> FiguresOnBoard;
 
@@ -73,15 +67,11 @@ public:
         std::string name;
         std::string type;
         int figure_spacing;
-        float speed[max_hardness]; // time to move one square in seconds
-        float speed_increment_per_second[max_hardness];
+        float speed; // time to move one square in seconds
+        float speed_increment_per_second;
         float speed_max;
         int total_figures;
-        float score_factor[max_hardness];
-        float clear_factor[max_hardness];
-        float bonus[max_hardness];
-        int max_expected_score[max_hardness];
-        int max_expected_score_with_multiplier[max_hardness];
+        float bonus;
         FigureIndex figures;
     };
 
@@ -97,8 +87,6 @@ public:
 
     int score();
 
-    bool completed();
-
     void update();
     void render();
     void step();
@@ -113,7 +101,8 @@ private:
     float m_squareWidth;
     float m_squareHeight;
 
-    float m_missScoreFactor;
+    float m_hit_score;
+    float m_miss_score_factor;
 
     int m_hardness;
 
@@ -127,7 +116,6 @@ private:
     int m_currentFigure;
     int m_currentFigureLine;
     int m_currentFigureOffset;
-    int m_multiplier;
     int m_figureGeneration;
 
     float m_speed;
@@ -154,10 +142,6 @@ private:
 
     int indexFromFigureName(std::string const &name);
     int indexFromLevelName(std::string const &name);
-
-    void processLeavingFigures();
-
-    void addHitToFigureOnBoard(int figureGeneration, int hit);
 
     bool isFigureOnMatrix(int figureGeneration);
 

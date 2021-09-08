@@ -10,31 +10,14 @@ imSquared::Figure::Figure()
     markedCount = 0;
     width = 0;
     height = 0;
-    score = 10;
-    hits = 0;
-    color.r = 0;
-    color.g = 0;
-    color.b = 255;
-    color.a = 255;
-    sound = "default sound";
 }
-
-#define FLT_N_INIT -100012.0
 
 imSquared::Level::Level()
 {
-    for (int i = 0; i != max_hardness; ++i)
-    {
-        speed[i] = FLT_N_INIT;
-        clear_factor[i] = FLT_N_INIT;
-        speed_increment_per_second[i] = FLT_N_INIT;
-        score_factor[i] = FLT_N_INIT;
-        max_expected_score[i] = 0;
-        max_expected_score_with_multiplier[i] = 0;
-        bonus[i] = 0;
-    }
-
-    speed_max = 0.1;
+    speed = 1.0;
+    speed_increment_per_second = 0;
+    bonus = 100;
+    speed_max = 0.5;
     total_figures = 0;
 }
 
@@ -42,8 +25,12 @@ imSquared::imSquared()
     : m_screenWidth(0), m_screenHeight(0),
       m_columns(0), m_rows(0),
       m_squareWidth(0), m_squareHeight(0),
-      m_missScoreFactor(-0.2f), m_hardness(0)
+      m_hardness(0)
 {
+
+    m_hit_score = 10.0f;
+    m_miss_score_factor = -0.2f;
+
     m_audio_started = false;
     m_base_pass.id = -1;
     m_currentLevel = 0;
@@ -59,11 +46,6 @@ int imSquared::score()
     return m_score;
 }
 
-bool imSquared::completed()
-{
-    return (m_score > (m_levels[m_currentLevel].clear_factor[m_hardness] *
-                       m_levels[m_currentLevel].max_expected_score[m_hardness]));
-}
 
 void imSquared::shutdown()
 {
@@ -117,7 +99,7 @@ void imSquared::startLevel(int level)
     // initialize level
     //
     m_currentLevelName = m_levels[m_currentLevel].name;
-    m_speed = m_levels[m_currentLevel].speed[m_hardness];
+    m_speed = m_levels[m_currentLevel].speed;
 
 
     m_translation = 0.0;
@@ -161,8 +143,6 @@ void imSquared::startLevel(int level)
     m_currentFigureLine = 0;
     m_currentFigureOffset = 0;
 
-    m_multiplier = 1;
-
     m_figuresOnBoard.clear();
 }
 
@@ -175,7 +155,10 @@ void imSquared::applyColors()
             }
             else if (cell.state == Marked)
             {
-                cell.color = cell.markedColor;
+                cell.color.r = 0;
+                cell.color.g = 0;
+                cell.color.b = 255;
+                cell.color.a = 255;
             }
             else if (cell.state == Hit)
             {
@@ -257,8 +240,6 @@ void imSquared::update()
 
     if (m_translation > m_squareHeight)
     {
-        processLeavingFigures();
-
         for (int currentColumn = 0; currentColumn != m_columns; ++currentColumn)
             for (int currentLine = 0; currentLine != (m_rows - 1); ++currentLine)
             {
@@ -289,12 +270,12 @@ void imSquared::update()
         // check if level changed
         if (!m_levels.empty() && (m_figureGeneration > m_levels[m_currentLevel].total_figures) && m_figuresOnBoard.empty())
         {
-            m_score += m_levels[m_currentLevel].bonus[m_hardness];
+            m_score += m_levels[m_currentLevel].bonus;
 
             // change level
             m_currentLevel = (m_currentLevel + 1) % m_levels.size();
             m_currentLevelName = m_levels[m_currentLevel].name;
-            m_speed = m_levels[m_currentLevel].speed[m_hardness];
+            m_speed = m_levels[m_currentLevel].speed;
             m_figureGeneration = -1;
             m_currentFigure = -1;
             m_currentFigureLine = 0;
@@ -302,7 +283,7 @@ void imSquared::update()
         }
     }
 
-    m_speed += updateDelta * m_levels[m_currentLevel].speed_increment_per_second[m_hardness];
+    m_speed += updateDelta * m_levels[m_currentLevel].speed_increment_per_second;
     if (m_speed < m_levels[m_currentLevel].speed_max)
         m_speed = m_levels[m_currentLevel].speed_max;
 
@@ -343,77 +324,19 @@ void imSquared::processTouches()
         for (auto &row : m_matrix)
             for (auto &cell : row)
             {
-                if (cell.state == Idle)
+                bool idle = (cell.state == Idle);
+                bool marked = (cell.state == Marked);
+                if (pointHitSquare(touch, cell) && (idle || marked)) 
                 {
-                    if (pointHitSquare(touch, cell))
-                    {
-                        cell.state = Miss;
-
-                        if (cell.figure >= 0)
-                        {
-                            int computed = (float)m_figures[cell.figure].score *
-                                           (float)m_levels[m_currentLevel].score_factor[m_hardness] *
-                                           (float)m_missScoreFactor;
-                            m_score += computed;
-                            if (m_score < 0)
-                                m_score = 0;
-
-                            logDbg("Simon", sfmt("Miss Score: %d", computed));
-                            m_multiplier = 1;
-
-                            for (FiguresOnBoard::iterator iterator = m_figuresOnBoard.begin();
-                                 iterator != m_figuresOnBoard.end(); ++iterator)
-                                iterator->multiplied = true;
-                        }
-                    }
-                }
-                else if (cell.state == Marked)
-                {
-                    if (pointHitSquare(touch, cell))
-                    {
-                        cell.state = Hit;
-
-                        addHitToFigureOnBoard(cell.figureGeneration, 1);
-                        if (cell.figure >= 0)
-                        {
-                            int computed = (float)m_figures[cell.figure].score *
-                                           (float)m_levels[m_currentLevel].score_factor[m_hardness] *
-                                           (float)m_multiplier;
-                            m_score += computed;
-                            logDbg("Simon", sfmt("Hit Score: %d %d", m_multiplier, computed));
-                        }
-                    }
+                    cell.state = idle ? Miss : Hit;
+                    float multiplier = idle ? (float)m_miss_score_factor : 1.0f;
+                    m_score += m_hit_score * multiplier;
+                    if (m_score < 0)
+                        m_score = 0;
                 }
             }
     }
-
-    //
-    // check multiplicators
-    //
-    for (auto &figure : m_figuresOnBoard)
-        if ((figure.hitCount == figure.markedCount) && !figure.multiplied)
-        {
-            m_multiplier++;
-            figure.multiplied = true;
-        }
-    
-}
-
-void imSquared::processLeavingFigures()
-{
-    //
-    // check for squares not pressed on last line
-    //
-    for (SquareElements::iterator i = m_matrix.rbegin()->begin(); i != m_matrix.rbegin()->end(); ++i)
-        if (i->state == Marked)
-            m_multiplier = 1;
-}
-
-void imSquared::addHitToFigureOnBoard(int figureGeneration, int hit)
-{
-    for (auto& figure : m_figuresOnBoard)
-        if (figure.figureGeneration == figureGeneration)
-            figure.hitCount += hit;  
+  
 }
 
 bool imSquared::isFigureOnMatrix(int figureGeneration)
@@ -477,9 +400,7 @@ void imSquared::processFigures()
             FigureOnBoard figureOnBoard;
             figureOnBoard.figure = m_currentFigure;
             figureOnBoard.figureGeneration = m_figureGeneration;
-            figureOnBoard.hitCount = 0;
             figureOnBoard.markedCount = m_figures[m_currentFigure].markedCount;
-            figureOnBoard.multiplied = false;
             m_figuresOnBoard.push_back(figureOnBoard);
             logDbg("Simon", sfmt("Generated figureOnBoard %d", figureOnBoard.figureGeneration));
         }
@@ -509,7 +430,6 @@ void imSquared::processFigures()
             if (m_figures[m_currentFigure].lines[m_currentFigureLine][x] == 'X')
             {
                 m_matrix[entry][m_currentFigureOffset + x].state = Marked;
-                m_matrix[entry][m_currentFigureOffset + x].markedColor = m_figures[m_currentFigure].color;
                 m_matrix[entry][m_currentFigureOffset + x].figure = m_currentFigure;
                 m_matrix[entry][m_currentFigureOffset + x].hasPiece = true;
                 m_matrix[entry][m_currentFigureOffset + x].figureGeneration = m_figureGeneration;
