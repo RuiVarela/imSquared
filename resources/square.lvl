@@ -3,8 +3,9 @@ type: puzzle
 figure_spacing: 4
 speed: 2.0
 speed_increment_per_second: -0.1
-figure: ryven
-figure: peter
+figure: char_R
+figure: char_r
+figure: char_p
 
 #
 

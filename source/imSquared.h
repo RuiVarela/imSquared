@@ -139,6 +139,7 @@ private:
     void processFigures();
 
     void loadDatabase();
+    void appendSyntheticDatabase();
 
     int indexFromFigureName(std::string const &name);
     int indexFromLevelName(std::string const &name);
