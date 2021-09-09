@@ -7,9 +7,7 @@
 class imSquared
 {
 public:
-    const float FLT_N_INIT = -100012.0f;
-
-    typedef std::vector<Vector2> Points;
+    static int const max_hardness = 3;
 
     enum State
     {
@@ -20,7 +18,6 @@ public:
         Miss // marked but not ok
     };
 
-    // watch out.. this is beeing copied with memcpy
     struct SquareElement
     {
         Color color;
@@ -31,23 +28,17 @@ public:
         int figureGeneration;
         int figure;
     };
-    typedef std::vector<SquareElement> SquareElements;
-    typedef std::vector<SquareElements> SquareMatrix;
-
-    typedef std::vector<std::string> FigureLines;
 
     struct Figure
     {
         Figure();
 
-        FigureLines lines;
+        std::vector<std::string> lines;
         int markedCount;
         int width;
         int height;
         std::string name;
     };
-
-    typedef std::vector<Figure> Figures;
 
     struct FigureOnBoard
     {
@@ -55,27 +46,22 @@ public:
         int markedCount;
         int figureGeneration;
     };
-    typedef std::vector<FigureOnBoard> FiguresOnBoard;
-
-    typedef std::vector<int> FigureIndex;
-    static int const max_hardness = 3;
 
     struct Level
     {
         Level();
 
-        std::string name;
         std::string type;
+        std::string message;
         int figure_spacing;
         float speed; // time to move one square in seconds
         float speed_increment_per_second;
         float speed_max;
         int total_figures;
         float bonus;
-        FigureIndex figures;
+        std::vector<std::string> figure_names;
+        std::vector<int> figures;
     };
-
-    typedef std::vector<Level> Levels;
 
 
     imSquared();
@@ -109,9 +95,9 @@ private:
     float m_translation;
     double m_lastUpdate;
 
-    SquareMatrix m_matrix;
+    std::vector<std::vector<SquareElement>> m_matrix;
 
-    Figures m_figures;
+    std::vector<Figure> m_figures;
     int m_lastFigure;
     int m_currentFigure;
     int m_currentFigureLine;
@@ -119,12 +105,11 @@ private:
     int m_figureGeneration;
 
     float m_speed;
-    Levels m_levels;
+    std::vector<Level> m_levels;
     int m_currentLevel;
-    std::string m_currentLevelName;
     int m_lineCreated;
 
-    FiguresOnBoard m_figuresOnBoard;
+    std::vector<FigureOnBoard> m_figuresOnBoard;
 
     int m_score;
 
@@ -142,7 +127,6 @@ private:
     void appendSyntheticDatabase();
 
     int indexFromFigureName(std::string const &name);
-    int indexFromLevelName(std::string const &name);
 
     bool isFigureOnMatrix(int figureGeneration);
 

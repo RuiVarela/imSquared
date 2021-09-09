@@ -14,10 +14,11 @@ imSquared::Figure::Figure()
 
 imSquared::Level::Level()
 {
+    figure_spacing = 3;
     speed = 1.0;
     speed_increment_per_second = 0;
     bonus = 100;
-    speed_max = 0.5;
+    speed_max = 0.1;
     total_figures = 0;
 }
 
@@ -98,7 +99,6 @@ void imSquared::startLevel(int level)
     //
     // initialize level
     //
-    m_currentLevelName = m_levels[m_currentLevel].name;
     m_speed = m_levels[m_currentLevel].speed;
 
 
@@ -118,7 +118,7 @@ void imSquared::startLevel(int level)
     //
     for (int currentLine = 0; currentLine != m_rows; ++currentLine)
     {
-        SquareElements row;
+        std::vector<SquareElement> row;
         for (int currentColumn = 0; currentColumn != m_columns; ++currentColumn)
         {
             SquareElement cell;
@@ -211,10 +211,10 @@ void imSquared::updateResolution()
 
         for (int currentLine = 0; currentLine != m_rows; ++currentLine)
         {
-            SquareElements &row = m_matrix[currentLine];
+            auto& row = m_matrix[currentLine];
             for (int currentColumn = 0; currentColumn != m_columns; ++currentColumn)
             {
-                SquareElement &cell = row[currentColumn];
+                auto& cell = row[currentColumn];
 
                 cell.rectangle.x = currentColumn * m_squareWidth + margin;
                 cell.rectangle.y = currentLine * m_squareHeight + margin;
@@ -274,7 +274,6 @@ void imSquared::update()
 
             // change level
             m_currentLevel = (m_currentLevel + 1) % m_levels.size();
-            m_currentLevelName = m_levels[m_currentLevel].name;
             m_speed = m_levels[m_currentLevel].speed;
             m_figureGeneration = -1;
             m_currentFigure = -1;
@@ -360,7 +359,7 @@ void imSquared::processFigures()
     //
     // Check leaving figure
     //
-    FiguresOnBoard::iterator iterator = m_figuresOnBoard.begin();
+    auto iterator = m_figuresOnBoard.begin();
     while (iterator != m_figuresOnBoard.end())
     {
         if (!isFigureOnMatrix(iterator->figureGeneration))
@@ -388,7 +387,10 @@ void imSquared::processFigures()
 
             if (m_levels[m_currentLevel].type == "random puzzle")
             {
-                m_currentFigure = rand() % int(m_figures.size());
+                do {
+                    m_currentFigure = rand() % int(m_figures.size());
+                } while (m_figures[m_currentFigure].lines.size() > 5);
+
             }
             else
             {
