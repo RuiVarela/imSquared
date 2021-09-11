@@ -20,8 +20,6 @@ public:
 
     struct SquareElement
     {
-        Color color;
-        Color markedColor;
         Rectangle rectangle;
         State state;
         bool hasPiece;
@@ -118,7 +116,6 @@ private:
     std::string m_center_message;
 
     void updateResolution();
-    void applyColors();
     void processTouches();
     bool pointHitSquare(Vector2 const &point, SquareElement const &square);
     void processFigures();

@@ -16,6 +16,27 @@ using namespace re;
 void imSquared::renderBackground()
 {
     ClearBackground(RAYWHITE);
+
+    Rectangle rect;
+    rect.x = 0;
+    rect.y = 0;
+    rect.width = GetScreenWidth();
+    rect.height = GetScreenHeight();
+
+    int base_alpha = 55;
+
+    Color c0 = ORANGE;
+    Color c1 = BEIGE;
+    c0.a = base_alpha + sin(re::getCurrentSec() * 0.5) * 25;
+    c1.a = base_alpha + sin(re::getCurrentSec()) * 25;
+
+    Color tl_color = c0;
+    Color bl_color = c1;
+    Color br_color = c0;
+    Color tr_color = c1;
+
+    DrawRectangleGradientEx(rect, tl_color, bl_color, br_color, tr_color); 
+
 }
 
 void imSquared::renderBlocks()
@@ -26,9 +47,34 @@ void imSquared::renderBlocks()
     for (auto &row : m_matrix)
         for (auto &cell : row)
         {
+            Color color = MINT_CREAM;
+
+            if (cell.state == Marked)
+            {
+                color.r = 0;
+                color.g = 0;
+                color.b = 255;
+                color.a = 255;
+            }
+            else if (cell.state == Hit)
+            {
+                color.r = 0;
+                color.g = 255;
+                color.b = 0;
+                color.a = 255;
+            }
+            else if (cell.state == Miss)
+            {
+                color.r = 255;
+                color.g = 0;
+                color.b = 0;
+                color.a = 255;
+            }
+
             Rectangle rectangle = cell.rectangle;
             rectangle.y -= m_translation;
-            DrawRectangleRec(rectangle, cell.color);
+            
+            DrawRectangleRec(rectangle, color);
         }
 }
 

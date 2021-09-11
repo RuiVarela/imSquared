@@ -123,13 +123,6 @@ void imSquared::startLevel(int level)
         {
             SquareElement cell;
 
-            {
-                cell.color.r = (0.5f + sin(float(currentLine)) * 0.3f) * 255;
-                cell.color.g = cell.color.r;
-                cell.color.b = cell.color.r;
-                cell.color.a = 255;
-            }
-
             cell.state = Idle;
             cell.figure = -1;
             cell.hasPiece = false;
@@ -144,36 +137,6 @@ void imSquared::startLevel(int level)
     m_currentFigureOffset = 0;
 
     m_figuresOnBoard.clear();
-}
-
-void imSquared::applyColors()
-{
-    for (auto& row : m_matrix)
-        for (auto& cell : row)
-            if (cell.state == Idle)
-            {
-            }
-            else if (cell.state == Marked)
-            {
-                cell.color.r = 0;
-                cell.color.g = 0;
-                cell.color.b = 255;
-                cell.color.a = 255;
-            }
-            else if (cell.state == Hit)
-            {
-                cell.color.r = 0;
-                cell.color.g = 255;
-                cell.color.b = 0;
-                cell.color.a = 255;
-            }
-            else if (cell.state == Miss)
-            {
-                cell.color.r = 255;
-                cell.color.g = 0;
-                cell.color.b = 0;
-                cell.color.a = 255;
-            }
 }
 
 void imSquared::updateResolution()
@@ -252,11 +215,6 @@ void imSquared::update()
                     m_matrix[currentLine + 1][currentColumn].figureGeneration = -1;
                     m_matrix[currentLine + 1][currentColumn].state = Idle;
                     m_matrix[currentLine + 1][currentColumn].hasPiece = false;
-
-                    int c = (0.5f + sin(float(currentLine + m_lineCreated)) * 0.3f) * 255;
-                    m_matrix[currentLine + 1][currentColumn].color.r = c;
-                    m_matrix[currentLine + 1][currentColumn].color.g = c;
-                    m_matrix[currentLine + 1][currentColumn].color.b = c;
                 }
             }
 
@@ -288,7 +246,6 @@ void imSquared::update()
 
     m_lastUpdate = getCurrentSec();
     processTouches();
-    applyColors();
 }
 
 bool imSquared::pointHitSquare(Vector2 const &point, SquareElement const &square)
