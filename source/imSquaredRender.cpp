@@ -2,16 +2,9 @@
 
 using namespace re;
 
-#define MINT_CREAM \
-    CLITERAL(Color) { 240, 247, 238, 255 }
-#define BEAU_BLUE \
-    CLITERAL(Color) { 196, 215, 242, 255 }
-#define POWDER_BLUE \
-    CLITERAL(Color) { 175, 222, 220, 255 }
-#define MORNING_BLUE \
-    CLITERAL(Color) { 145, 168, 164, 255 }
-#define OLD_LAVANDER \
-    CLITERAL(Color) { 119, 104, 113, 255 }
+#define MINT_CREAM  CLITERAL(Color) { 240, 247, 238, 255 }
+#define BEAU_BLUE CLITERAL(Color) { 196, 215, 242, 255 }
+#define OLD_LAVANDER CLITERAL(Color) { 119, 104, 113, 255 }
 
 void imSquared::renderBackground()
 {
@@ -47,29 +40,35 @@ void imSquared::renderBlocks()
     for (auto &row : m_matrix)
         for (auto &cell : row)
         {
-            Color color = MINT_CREAM;
+            Color color;
+            color.r = 170;
+            color.g = 210;
+            color.b = 236;
+            color.a = 50;
+
 
             if (cell.state == Marked)
             {
-                color.r = 0;
-                color.g = 0;
-                color.b = 255;
+                color.r = 153;
+                color.g = 195;
+                color.b = 236;
                 color.a = 255;
             }
             else if (cell.state == Hit)
             {
-                color.r = 0;
-                color.g = 255;
-                color.b = 0;
+                color.r = 151;
+                color.g = 227;
+                color.b = 194;
                 color.a = 255;
             }
             else if (cell.state == Miss)
             {
-                color.r = 255;
-                color.g = 0;
-                color.b = 0;
+                color.r = 246;
+                color.g = 156;
+                color.b = 158;
                 color.a = 255;
             }
+ 
 
             Rectangle rectangle = cell.rectangle;
             rectangle.y -= m_translation;
@@ -115,7 +114,11 @@ void imSquared::render()
             DrawText(m_center_message.c_str(), x, y, font_size, OLD_LAVANDER);
         }
 
-        DrawText(re::sfmt("%08d Level %d", m_score, m_currentLevel + 1).c_str(), 20, 20, 20, LIGHTGRAY);
+        int level = m_currentLevel + 1;
+        level += m_hardness * m_levels.size();
+
+        //DrawText(re::sfmt("%08d Level %d - %.4f", m_score, level, m_speed).c_str(), 20, 20, 20, GRAY);
+        DrawText(re::sfmt("%08d Level %d", m_score, level).c_str(), 20, 20, 20, GRAY);
     }
     EndTextureMode();
 

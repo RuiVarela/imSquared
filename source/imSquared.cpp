@@ -18,15 +18,13 @@ imSquared::Level::Level()
     speed = 1.0;
     speed_increment_per_second = 0;
     bonus = 100;
-    speed_max = 0.1;
     total_figures = 0;
 }
 
 imSquared::imSquared()
     : m_screenWidth(0), m_screenHeight(0),
       m_columns(0), m_rows(0),
-      m_squareWidth(0), m_squareHeight(0),
-      m_hardness(0)
+      m_squareWidth(0), m_squareHeight(0)
 {
 
     m_hit_score = 10.0f;
@@ -46,7 +44,6 @@ int imSquared::score()
 {
     return m_score;
 }
-
 
 void imSquared::shutdown()
 {
@@ -68,12 +65,12 @@ void imSquared::shutdown()
 void imSquared::setup()
 {
     SetTraceLogLevel(LOG_DEBUG);
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE /*| FLAG_MSAA_4X_HINT*/);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
 
     InitWindow(800, 450, "imSquared");
 
 #ifndef PLATFORM_WEB
-    SetTargetFPS(30);
+    SetTargetFPS(60);
 #endif
 
     m_screenWidth = -1;
@@ -100,6 +97,7 @@ void imSquared::startLevel(int level)
     // initialize level
     //
     m_speed = m_levels[m_currentLevel].speed;
+    m_hardness = 0;
 
 
     m_translation = 0.0;
@@ -170,7 +168,9 @@ void imSquared::updateResolution()
         //
         // Compute Square positions
         //
-        int margin = 1;
+        int margin = re::minimum(m_screenWidth, m_screenHeight) * 0.005;
+        if (margin <= 0)
+            margin = 1;
 
         for (int currentLine = 0; currentLine != m_rows; ++currentLine)
         {
@@ -197,6 +197,8 @@ void imSquared::update()
 
     double currentTime = getCurrentSec();
     double updateDelta = currentTime - m_lastUpdate;
+
+    float const hardnessSpeedChange = 0.05f;
 
     m_translation += (updateDelta / m_speed) * m_squareHeight;
     //logDbg("Simon", sfmt("m_translation %0.5f", m_translation));
@@ -231,8 +233,19 @@ void imSquared::update()
             m_score += m_levels[m_currentLevel].bonus;
 
             // change level
-            m_currentLevel = (m_currentLevel + 1) % m_levels.size();
-            m_speed = m_levels[m_currentLevel].speed;
+            int next = (m_currentLevel + 1) % m_levels.size();
+            if (next < m_currentLevel) {
+                m_hardness++;
+                // completed all levels
+                if (m_hardness == 10) {
+                    m_hardness = 0;    
+                }
+            }
+
+            m_currentLevel = next;
+
+
+            m_speed = m_levels[m_currentLevel].speed - (m_hardness * hardnessSpeedChange);
             m_figureGeneration = -1;
             m_currentFigure = -1;
             m_currentFigureLine = 0;
@@ -240,9 +253,12 @@ void imSquared::update()
         }
     }
 
+    float speed_max = re::clampAbove(0.1f - (m_hardness * hardnessSpeedChange), 0.05f);
+    
+
     m_speed += updateDelta * m_levels[m_currentLevel].speed_increment_per_second;
-    if (m_speed < m_levels[m_currentLevel].speed_max)
-        m_speed = m_levels[m_currentLevel].speed_max;
+    if (m_speed < speed_max)
+        m_speed = speed_max;
 
     m_lastUpdate = getCurrentSec();
     processTouches();

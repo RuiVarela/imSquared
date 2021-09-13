@@ -302,7 +302,6 @@ void imSquared::loadDatabase()
                 PROP_TEST_FLT(level, bonus)
                 PROP_TEST_FLT(level, speed)
                 PROP_TEST_FLT(level, speed_increment_per_second)
-                PROP_TEST_FLT(level, speed_max)
                 PROP_TEST_INT(level, total_figures)
                 PROP_TEST_STR(level, message)
                 PROP_TEST(figure, level.figure_names.push_back(line))      
@@ -349,7 +348,6 @@ void imSquared::loadDatabase()
             logDbg("Squared", sfmt("figure_spacing: %d", level.figure_spacing));
             logDbg("Squared", sfmt("speed: %.3f", level.speed));
             logDbg("Squared", sfmt("speed_increment_per_second: %.3f", level.speed_increment_per_second));
-            logDbg("Squared", sfmt("speed_max: %.3f", level.speed_max));
             logDbg("Squared", sfmt("total_figures: %d", level.total_figures));
             logDbg("Squared", sfmt("bonus: %.3f", level.bonus));
 

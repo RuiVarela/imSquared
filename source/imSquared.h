@@ -54,7 +54,6 @@ public:
         int figure_spacing;
         float speed; // time to move one square in seconds
         float speed_increment_per_second;
-        float speed_max;
         int total_figures;
         float bonus;
         std::vector<std::string> figure_names;

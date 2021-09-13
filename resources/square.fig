@@ -29,15 +29,33 @@ X---X-
 
 #
 
-name: continuous test figure 1
+name: continuous line
+
+emit_count:15
+X----
+emit_count:15
+-X---
+emit_count:15
+--X--
+emit_count:15
+---X-
+emit_count:15
+----X
+
+#
+
+name: continuous colossus
 
 emit_count:5
 XXX-X
 -XX-X
 emit_count:2
 --X-X
-emit_count:20
+emit_count:15
 --X--
 X---X
 
 #
+
+
+
