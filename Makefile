@@ -39,10 +39,7 @@ ifeq ($(WEB), 1)
 	CPPFLAGS+=-DPLATFORM_WEB
 
 	LDFLAGS+=-s USE_GLFW=3
-	LDFLAGS+=--preload-file button_menu.png
-	LDFLAGS+=--preload-file button_play.png
-	LDFLAGS+=--preload-file button_restart.png
-	LDFLAGS+=--preload-file button_resume.png
+	LDFLAGS+=--preload-file resources
 	OUT_EXT=.html
 
 else

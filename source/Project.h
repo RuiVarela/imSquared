@@ -54,5 +54,6 @@
 #include "MeanBuffer.h"
 #include "Timer.h"
 
-
+#include "Button.h"
+#include "Menu.h"
 #include "imSquared.h"

@@ -111,8 +111,16 @@ private:
     int m_score;
 
     RenderTexture2D m_base_pass;
+    std::vector<std::string> m_songs_filenames;
+    std::vector<Music> m_songs;
+    int m_song_playing;
     bool m_audio_started;
     std::string m_center_message;
+
+    re::Menu m_game_menu;
+    bool m_game_menu_show;
+
+    void playNextSong();
 
     void updateResolution();
     void processTouches();
@@ -128,4 +136,5 @@ private:
 
     void renderBackground();
     void renderBlocks();
+
 };

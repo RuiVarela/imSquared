@@ -26,6 +26,7 @@ imSquared::imSquared()
       m_columns(0), m_rows(0),
       m_squareWidth(0), m_squareHeight(0)
 {
+    m_game_menu_show = false;
 
     m_hit_score = 10.0f;
     m_miss_score_factor = -0.2f;
@@ -51,6 +52,11 @@ void imSquared::shutdown()
     {
         UnloadRenderTexture(m_base_pass);
         m_base_pass.id = -1;
+    }
+
+    for (auto &current : m_songs)
+    {
+        UnloadMusicStream(current);
     }
 
     if (m_audio_started)
@@ -79,14 +85,43 @@ void imSquared::setup()
     m_rows = 13;
 
     //
+    // Set songs
+    //
+    m_songs_filenames.push_back("resources/__blind_justice__.mod");
+    m_songs_filenames.push_back("resources/_escape_.mod");
+    m_songs_filenames.push_back("resources/65mix-russian.mod");
+
+    //
     // Load Figure Database
     //
     loadDatabase();
 
     //
-    // Start Level
+    // Create Squares
     //
-    startLevel(0);
+    m_matrix.clear();
+    for (int currentLine = 0; currentLine != m_rows; ++currentLine)
+    {
+        std::vector<SquareElement> row;
+        for (int currentColumn = 0; currentColumn != m_columns; ++currentColumn)
+        {
+            SquareElement cell;
+
+            cell.state = Idle;
+            cell.figure = -1;
+            cell.hasPiece = false;
+            row.push_back(cell);
+        }
+        m_matrix.push_back(row);
+    }
+
+
+    m_game_menu_show = true;
+    m_game_menu.addButton("resources/start.png", [this]() { 
+        m_game_menu_show = false;
+        startLevel(0);
+        playNextSong();
+    });
 }
 
 void imSquared::startLevel(int level)
@@ -106,28 +141,9 @@ void imSquared::startLevel(int level)
     //
     // Setup Geometry
     //
-    m_matrix.clear();
     m_lineCreated = 0;
 
     m_score = 0;
-
-    //
-    // Compute Square positions
-    //
-    for (int currentLine = 0; currentLine != m_rows; ++currentLine)
-    {
-        std::vector<SquareElement> row;
-        for (int currentColumn = 0; currentColumn != m_columns; ++currentColumn)
-        {
-            SquareElement cell;
-
-            cell.state = Idle;
-            cell.figure = -1;
-            cell.hasPiece = false;
-            row.push_back(cell);
-        }
-        m_matrix.push_back(row);
-    }
 
     m_figureGeneration = -1;
     m_currentFigure = -1;
@@ -189,8 +205,21 @@ void imSquared::updateResolution()
 }
 
 void imSquared::update()
-{
+{    
+    if (m_audio_started) { 
+        if (GetMusicTimePlayed(m_songs[m_song_playing]) >= (GetMusicTimeLength(m_songs[m_song_playing]) - 0.01)) {
+            playNextSong();
+        }
+        
+        UpdateMusicStream(m_songs[m_song_playing]); 
+    } 
+
     updateResolution();
+
+    if (m_game_menu_show) {
+        m_game_menu.update();
+        return;
+    }
 
     if (m_levels.empty())
         return;
@@ -422,6 +451,27 @@ void imSquared::processFigures()
     if (m_currentFigureLine >= m_figures[m_currentFigure].height)
         m_currentFigure = -1 - 1 * m_levels[m_currentLevel].figure_spacing;
     
+}
+
+void imSquared::playNextSong() 
+{
+    if (!m_audio_started)
+    {
+        InitAudioDevice();
+        m_audio_started = true;
+
+        m_song_playing = -1;
+        m_songs.resize(m_songs_filenames.size());
+        for (size_t i = 0; i != m_songs_filenames.size(); ++i)
+            m_songs[i] = LoadMusicStream(m_songs_filenames[i].c_str());
+    }
+
+    if (m_song_playing >= 0) {
+        StopMusicStream(m_songs[m_song_playing]);
+    }
+
+    m_song_playing = (m_song_playing + 1) % m_songs.size();
+    PlayMusicStream(m_songs[m_song_playing]);
 }
 
 void imSquared::step()

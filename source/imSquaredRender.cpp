@@ -86,7 +86,15 @@ void imSquared::render()
     {
         renderBackground();
 
-        renderBlocks();
+        if (m_game_menu_show) {
+            m_game_menu.render();
+        } else {
+            renderBlocks();
+
+            int level = (m_currentLevel + 1) + m_hardness * m_levels.size();
+            //DrawText(re::sfmt("%08d Level %d - %.4f", m_score, level, m_speed).c_str(), 20, 20, 20, GRAY);
+            DrawText(re::sfmt("%08d Level %d", m_score, level).c_str(), 20, 20, 20, GRAY);
+        }
 
         if (!m_center_message.empty())
         {
@@ -113,12 +121,6 @@ void imSquared::render()
 
             DrawText(m_center_message.c_str(), x, y, font_size, OLD_LAVANDER);
         }
-
-        int level = m_currentLevel + 1;
-        level += m_hardness * m_levels.size();
-
-        //DrawText(re::sfmt("%08d Level %d - %.4f", m_score, level, m_speed).c_str(), 20, 20, 20, GRAY);
-        DrawText(re::sfmt("%08d Level %d", m_score, level).c_str(), 20, 20, 20, GRAY);
     }
     EndTextureMode();
 
@@ -134,11 +136,4 @@ void imSquared::render()
         DrawTexturePro(m_base_pass.texture, src, dst, origin, 0.0f, WHITE);
     }
     EndDrawing();
-
-    
-    //if (m_menu.activated())
-    //{
-    //    m_menu.render(this);
-    //    return;
-    //}
 }
