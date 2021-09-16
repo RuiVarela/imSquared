@@ -3,6 +3,8 @@ Puzzle game engine idealized in 2010.
 Revived now for the kids.
 
 ![imSquared](https://github.com/RuiVarela/imSquared/raw/master/sample.gif)
+[Web Demo](https://imsquared.demanda.pt/)
+
 
 # credits
 This game was developed by
